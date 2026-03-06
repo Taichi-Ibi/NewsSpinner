@@ -1,47 +1,77 @@
 ---
 name: news-fetch
-description: Manage NewsSpinner feeds and fetch Google News headlines for Claude Code spinner
+description: >
+  Manage Google News RSS feeds for the NewsSpinner spinner.
+  Trigger when user wants to add/remove news keywords, fetch headlines,
+  or check spinner feed status. Keywords: spinner, news, feed, headline, ニュース, フィード
 argument-hint: "[add|remove|list|fetch] [keyword]"
+disable-model-invocation: true
 allowed-tools: Bash, AskUserQuestion
 ---
 
 # NewsSpinner — ニュースフィード管理
 
-Claude Code の spinner（推論中に表示されるテキスト）を Google News のヘッドラインに置き換える NewsSpinner のフィード管理スキル。
+Claude Code の spinner（推論中テキスト）を Google News ヘッドラインに置き換える。
+
+## 現在の状態
+
+登録済みフィード:
+!`bash ~/.newsspinner/bin/fetch.sh list 2>/dev/null || echo "未インストール"`
+
+プール残数:
+!`jq 'length' ~/.newsspinner/pool.json 2>/dev/null || echo "0"`
+
+## 前提チェック
+
+スクリプトが `~/.newsspinner/bin/` に存在しない場合、以下を案内して終了:
+
+```
+bash ${CLAUDE_SKILL_DIR}/bin/install.sh
+```
 
 ## 動作
 
-引数に応じて以下を実行する。
+### 引数なし (`$ARGUMENTS` が空)
 
-### `$ARGUMENTS` が空の場合
+AskUserQuestion でユーザーに操作を選ばせる:
+1. フィードを追加 → キーワードを聞いてから `add` を実行
+2. フィードを削除 → 登録済み一覧を見せて選ばせる
+3. フィード一覧表示
+4. ニュースを取得 (fetch)
 
-ユーザーに何をしたいか確認する（AskUserQuestion を使う）:
-- フィードを追加（キーワードを聞く）
-- フィードを削除（既存フィード一覧から選択）
-- フィード一覧表示
-- ニュースを取得（fetch 実行）
+### `add <keyword>`
 
-### `add <keyword>` の場合
+```bash
+bash ~/.newsspinner/bin/fetch.sh add "$1"
+```
 
-1. `bash ~/.newsspinner/bin/fetch.sh add "<keyword>"` を実行してフィードを登録
-2. 登録後、すぐに fetch するか確認
-3. fetch する場合は `bash ~/.newsspinner/bin/fetch.sh` を実行
+- 登録後「すぐに fetch するか？」を確認
+- fetch する場合: `bash ~/.newsspinner/bin/fetch.sh`
 
-### `remove <keyword>` の場合
+### `remove <keyword>`
 
-`bash ~/.newsspinner/bin/fetch.sh remove "<keyword>"` を実行
+```bash
+bash ~/.newsspinner/bin/fetch.sh remove "$1"
+```
 
-### `list` の場合
+### `list`
 
-`bash ~/.newsspinner/bin/fetch.sh list` を実行して登録済みフィード一覧を表示
+```bash
+bash ~/.newsspinner/bin/fetch.sh list
+```
 
-### `fetch` の場合
+### `fetch`
 
-`bash ~/.newsspinner/bin/fetch.sh` を実行して全フィードからニュースを取得
+```bash
+bash ~/.newsspinner/bin/fetch.sh
+```
 
-## 重要な注意
+## エラー時
 
-- キーワードの追加時、ユーザーに確認してから実行すること
-- Google News RSS の URL 形式: `https://news.google.com/rss/search?q=<keyword>&hl=ja&gl=JP&ceid=JP:ja`
-- スクリプトは `~/.newsspinner/bin/` にインストールされている
-- 未インストールの場合は `bash <repo>/bin/install.sh` を案内する
+- コマンド失敗時はエラー内容を表示し、考えられる原因を伝える
+- `jq` / `curl` 未インストール → `install.sh` を案内
+- ネットワークエラー → 接続確認を促す
+- config.json 破損 → デフォルトで再作成する手順を案内:
+  ```bash
+  cp ${CLAUDE_SKILL_DIR}/config.json ~/.newsspinner/config.json
+  ```
