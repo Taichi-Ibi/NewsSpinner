@@ -1,0 +1,14 @@
+{
+  "feeds": [
+    {"name": "NHK 主要ニュース", "url": "https://www.nhk.or.jp/rss/news/cat0.xml"},
+    {"name": "Hacker News", "url": "https://hnrss.org/frontpage"},
+    {"name": "TechCrunch", "url": "https://techcrunch.com/feed/"}
+  ],
+  "max_pool_size": 50,
+  "max_title_length": 40,
+  "empty_messages": [
+    "📰 ニュース切れ！ fetch して",
+    "No news... refresh me",
+    "Waiting for fresh headlines"
+  ]
+}
