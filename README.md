@@ -49,6 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/Taichi-Ibi/NewsSpinner/main/install
 ```
 
 The installer downloads skills into your project's `.claude/skills/` directory. All settings and runtime data are stored in `.claude/`.
+It also appends NewsSpinner-specific ignore rules to your project's `.gitignore` to avoid dirtying your repository with runtime files.
 
 **Restart Claude Code after installation to activate the hook.**
 
@@ -269,6 +270,7 @@ curl -fsSL https://raw.githubusercontent.com/Taichi-Ibi/NewsSpinner/main/install
 ```
 
 インストーラーはスキルをプロジェクトの `.claude/skills/` にダウンロードします。設定・データはすべて `.claude/` ディレクトリに保存されます。
+また、ランタイム生成ファイルでリポジトリが汚れないように、NewsSpinner 用の `.gitignore` ルールを自動追記します。
 
 **インストール後、Claude Code を再起動してください（hook を有効化するため）。**
 

@@ -8,6 +8,7 @@ BRANCH="main"
 PROJECT_ROOT="$(pwd)"
 CLAUDE_DIR="${PROJECT_ROOT}/.claude"
 SKILLS_DIR="${CLAUDE_DIR}/skills"
+GITIGNORE_FILE="${PROJECT_ROOT}/.gitignore"
 
 echo "=== NewsSpinner Installer ==="
 
@@ -26,6 +27,36 @@ echo "[1/4] Dependencies OK (jq, curl)"
 # 2. Ensure project-local .claude/ exists
 mkdir -p "${CLAUDE_DIR}"
 echo "[2/4] Using project directory: ${PROJECT_ROOT}"
+
+# 2.5 Update .gitignore for NewsSpinner runtime files
+touch "${GITIGNORE_FILE}"
+
+gitignore_rules=(
+  ".claude/skills/news-fetch/"
+  ".claude/config.json"
+  ".claude/settings.json"
+  ".claude/pool.json"
+  ".claude/history.json"
+  ".claude/.lock"
+  ".claude/settings.json.bak.*"
+  ".claude/*.tmp"
+)
+
+if ! grep -Fq "# NewsSpinner (auto-added)" "${GITIGNORE_FILE}"; then
+  {
+    echo ""
+    echo "# NewsSpinner (auto-added)"
+  } >> "${GITIGNORE_FILE}"
+fi
+
+added_count=0
+for rule in "${gitignore_rules[@]}"; do
+  if ! grep -Fqx "$rule" "${GITIGNORE_FILE}"; then
+    echo "$rule" >> "${GITIGNORE_FILE}"
+    added_count=$((added_count + 1))
+  fi
+done
+echo "       .gitignore updated (${added_count} rule(s) added)"
 
 # 3. Download repo and extract skills
 TMP=$(mktemp -d)
