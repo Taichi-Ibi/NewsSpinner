@@ -4,7 +4,7 @@ description: >
   Fetch Google News headlines into the NewsSpinner spinner pool.
   Trigger when user wants to fetch news headlines, search keywords, or manage spinner content.
   Keywords: spinner, news, fetch, headline, ニュース, フィード
-argument-hint: "<keyword> [--since YYYY-MM-DD]"
+argument-hint: "<keyword>… | --since DATE keyword | clear | weave on/off | uninstall"
 allowed-tools: Bash, AskUserQuestion
 ---
 
@@ -56,6 +56,22 @@ Examples:
   ```bash
   bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" --since <YYYY-MM-DD> 高市
   ```
+
+### `weave on` / `weave off`
+
+Toggle W&B Weave tracking by updating `weave_enabled` in the runtime config:
+
+```bash
+# weave on
+jq '.weave_enabled = true' "${CLAUDE_SKILL_DIR}/runtime/state.json" > "${CLAUDE_SKILL_DIR}/runtime/state.json.tmp" \
+  && mv "${CLAUDE_SKILL_DIR}/runtime/state.json.tmp" "${CLAUDE_SKILL_DIR}/runtime/state.json"
+
+# weave off
+jq '.weave_enabled = false' "${CLAUDE_SKILL_DIR}/runtime/state.json" > "${CLAUDE_SKILL_DIR}/runtime/state.json.tmp" \
+  && mv "${CLAUDE_SKILL_DIR}/runtime/state.json.tmp" "${CLAUDE_SKILL_DIR}/runtime/state.json"
+```
+
+Tell the user the current state after toggling. For `weave on`, also check if `WANDB_API_KEY` is set and warn if not.
 
 ### `clear`
 

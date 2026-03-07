@@ -4,3 +4,4 @@ history.json
 settings.json
 settings.json.bak*
 .lock
+skills/*/runtime/

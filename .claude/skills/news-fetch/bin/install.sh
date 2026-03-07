@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 RUNTIME_DIR="$SKILL_DIR/runtime"
+TEMPLATES_DIR="$SKILL_DIR/templates"
 ROTATE_SH="$SCRIPT_DIR/rotate.sh"
 SETTINGS="$SPINNER_DIR/settings.json"
 
@@ -28,25 +29,21 @@ echo "[1/4] Dependencies OK (jq, curl)"
 chmod +x "$SCRIPT_DIR"/*.sh
 echo "[2/4] Script permissions set"
 
-# 3. Create runtime config.json (preserve existing)
+# 3. Initialize runtime directory from templates (preserve existing user files)
 mkdir -p "$RUNTIME_DIR"
-if [ -f "$SPINNER_DIR/config.json" ] && [ ! -f "$RUNTIME_DIR/config.json" ]; then
-  mv "$SPINNER_DIR/config.json" "$RUNTIME_DIR/config.json"
-  echo "[3/4] Migrated legacy .claude/config.json -> news-fetch/runtime/config.json"
-elif [ ! -f "$RUNTIME_DIR/config.json" ]; then
-  cp "$SKILL_DIR/config.json" "$RUNTIME_DIR/config.json"
-  echo "[3/4] Default runtime/config.json created"
+if [ ! -f "$RUNTIME_DIR/config.json" ]; then
+  cp "$TEMPLATES_DIR/config.json" "$RUNTIME_DIR/config.json"
+  echo "[3/4] runtime/config.json created from template"
 else
   echo "[3/4] runtime/config.json already exists, keeping current"
 fi
+if [ ! -f "$RUNTIME_DIR/state.json" ]; then
+  cp "$TEMPLATES_DIR/state.json" "$RUNTIME_DIR/state.json"
+fi
 
-# 4. Initialize runtime data files
-if [ -f "$SPINNER_DIR/pool.json" ] && [ ! -f "$RUNTIME_DIR/pool.json" ]; then
-  mv "$SPINNER_DIR/pool.json" "$RUNTIME_DIR/pool.json"
-fi
-if [ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$RUNTIME_DIR/history.json" ]; then
-  mv "$SPINNER_DIR/history.json" "$RUNTIME_DIR/history.json"
-fi
+# 4. Initialize runtime data files (migrate from legacy layout if needed)
+[ -f "$SPINNER_DIR/pool.json" ]    && [ ! -f "$RUNTIME_DIR/pool.json" ]    && mv "$SPINNER_DIR/pool.json"    "$RUNTIME_DIR/pool.json"
+[ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$RUNTIME_DIR/history.json" ] && mv "$SPINNER_DIR/history.json" "$RUNTIME_DIR/history.json"
 [ -f "$RUNTIME_DIR/pool.json" ]    || echo '[]' > "$RUNTIME_DIR/pool.json"
 [ -f "$RUNTIME_DIR/history.json" ] || echo '[]' > "$RUNTIME_DIR/history.json"
 echo "[4/4] Data files initialized"

@@ -1,3 +1,6 @@
+# Weave tracking log
+weave_track.log
+
 # Temporary files
 *.tmp
 *.bak
@@ -15,3 +18,6 @@
 *~
 .vscode/
 .idea/
+
+# Python
+.venv/

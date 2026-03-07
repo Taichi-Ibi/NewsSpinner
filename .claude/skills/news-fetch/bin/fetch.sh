@@ -6,25 +6,24 @@ SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 RUNTIME_DIR="$SKILL_DIR/runtime"
 CONFIG="$RUNTIME_DIR/config.json"
+STATE="$RUNTIME_DIR/state.json"
 POOL="$RUNTIME_DIR/pool.json"
 HISTORY="$RUNTIME_DIR/history.json"
 LOCK="$RUNTIME_DIR/.lock"
 
-mkdir -p "$RUNTIME_DIR"
-
-# One-time migration from legacy .claude/*.json layout
-[ -f "$SPINNER_DIR/config.json" ] && [ ! -f "$CONFIG" ] && mv "$SPINNER_DIR/config.json" "$CONFIG"
-[ -f "$SPINNER_DIR/pool.json" ] && [ ! -f "$POOL" ] && mv "$SPINNER_DIR/pool.json" "$POOL"
-[ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$HISTORY" ] && mv "$SPINNER_DIR/history.json" "$HISTORY"
-
-# Ensure data files exist
-[ -f "$POOL" ] || echo '[]' > "$POOL"
-[ -f "$HISTORY" ] || echo '[]' > "$HISTORY"
+# Globals set by do_fetch so the caller can use results without extra jq reads
+FETCH_ADDED=0
+FETCH_POOL_SIZE=0
 
 if [ ! -f "$CONFIG" ]; then
-  echo "Error: $CONFIG not found. Run install.sh first." >&2
+  echo "Error: runtime/config.json not found. Run install.sh first." >&2
   exit 1
 fi
+
+# Ensure data files exist
+[ -f "$POOL" ]    || echo '[]' > "$POOL"
+[ -f "$HISTORY" ] || echo '[]' > "$HISTORY"
+[ -f "$STATE" ]   || echo '{"weave_enabled": false}' > "$STATE"
 
 MAX_POOL_SIZE=$(jq -r '.max_pool_size // 50' "$CONFIG")
 
@@ -86,16 +85,22 @@ pubdate_to_ymd() {
   printf '%s-%s-%02d\n' "$year" "$month" "$((10#$day))"
 }
 
-# Extract pubDate<TAB>title pairs from RSS XML (compact/single-line items)
+# Extract pubDate<TAB>link<TAB>source_url<TAB>source_name<TAB>title from RSS XML
 extract_items() {
   local xml="$1"
   echo "$xml" | sed -E 's/<\/item>/&\n/g' | grep -E '^<item>' | while IFS= read -r item; do
-    local title pubdate
+    local title pubdate link source_url source_name
     title=$(echo "$item" | tr '<' '\n' | grep '^title>' | head -1 \
       | sed 's/^title>//' | sed 's/<!\[CDATA\[//;s/\]\]>//')
     pubdate=$(echo "$item" | grep -oE '<pubDate>[^<]*</pubDate>' | head -1 \
       | sed 's/<pubDate>//;s/<\/pubDate>//')
-    [ -n "$title" ] && printf '%s\t%s\n' "$pubdate" "$title"
+    link=$(echo "$item" | grep -oE '<link>[^<]*</link>' | head -1 \
+      | sed 's/<link>//;s/<\/link>//')
+    source_url=$(echo "$item" | grep -oE '<source url="[^"]*"' | head -1 \
+      | sed 's/<source url="//;s/"//')
+    source_name=$(echo "$item" | grep -oE '<source[^>]*>[^<]*</source>' | head -1 \
+      | sed 's/<source[^>]*>//;s/<\/source>//')
+    [ -n "$title" ] && printf '%s\t%s\t%s\t%s\t%s\n' "$pubdate" "$link" "$source_url" "$source_name" "$title"
   done
 }
 
@@ -117,6 +122,7 @@ do_fetch() {
   local pool_size
   pool_size=$(echo "$pool_json" | jq 'length')
   local pool_full=false
+  local new_items_json="[]"
 
   for keyword in "${keywords[@]}"; do
     [ "$pool_full" = true ] && break
@@ -133,7 +139,7 @@ do_fetch() {
 
     local new_titles=()
 
-    while IFS=$'\t' read -r pub_raw raw_title; do
+    while IFS=$'\t' read -r pub_raw link source_url source_name raw_title; do
       [ -z "$raw_title" ] && continue
 
       # Trim whitespace
@@ -162,6 +168,10 @@ do_fetch() {
 
       new_titles+=("$title")
       pool_json=$(echo "$pool_json" | jq --arg t "$title" '. + [$t]')
+      new_items_json=$(echo "$new_items_json" | jq \
+        --arg t "$title" --arg l "$link" --arg p "$pub_raw" \
+        --arg su "$source_url" --arg sn "$source_name" \
+        '. + [{title: $t, link: $l, pubDate: $p, source_url: $su, source_name: $sn}]')
       pool_size=$((pool_size + 1))
       added=$((added + 1))
 
@@ -179,9 +189,13 @@ do_fetch() {
     fi
   done
 
+  echo "$new_items_json" > "$HEADLINES_TMP"
+
   local total
   total=$(jq 'length' "$POOL")
   echo "Added $added new headline(s). Pool size: $total"
+  FETCH_ADDED=$added
+  FETCH_POOL_SIZE=$total
 }
 
 # Parse --since option
@@ -214,6 +228,7 @@ case "${1:-}" in
     exit 1
     ;;
   *)
+    HEADLINES_TMP=$(mktemp "${RUNTIME_DIR}/new_headlines_XXXXXX.json")
     if command -v flock > /dev/null 2>&1; then
       exec 9>"$LOCK"
       flock -w 10 9 || { echo "Error: Could not acquire lock." >&2; exit 1; }
@@ -222,6 +237,21 @@ case "${1:-}" in
     else
       do_fetch "$START_DATE" "$@"
     fi
+    WEAVE_ENABLED=$(jq -r '.weave_enabled // false' "$STATE")
+    if [ "$WEAVE_ENABLED" = "true" ]; then
+      python3 "$SCRIPT_DIR/weave_track.py" \
+        --keywords "$@" \
+        ${START_DATE:+--since "$START_DATE"} \
+        --added "$FETCH_ADDED" \
+        --pool-size-before "$((FETCH_POOL_SIZE - FETCH_ADDED))" \
+        --pool-size-after "$FETCH_POOL_SIZE" \
+        --config "$CONFIG" \
+        --headlines-json "$HEADLINES_TMP" 2>/dev/null; weave_exit=$?
+      if [ "$weave_exit" -eq 2 ]; then
+        echo "Hint: Weave not installed. Run: pip install weave"
+      fi
+    fi
+    rm -f "$HEADLINES_TMP"
     bash "$SCRIPT_DIR/rotate.sh" 2>/dev/null || true
     ;;
 esac
