@@ -5,6 +5,9 @@ set -euo pipefail
 
 REPO="Taichi-Ibi/NewsSpinner"
 BRANCH="main"
+PROJECT_ROOT="$(pwd)"
+CLAUDE_DIR="${PROJECT_ROOT}/.claude"
+SKILLS_DIR="${CLAUDE_DIR}/skills"
 
 echo "=== NewsSpinner Installer ==="
 
@@ -20,24 +23,9 @@ if [ "${#missing[@]}" -gt 0 ]; then
 fi
 echo "[1/4] Dependencies OK (jq, curl)"
 
-# 2. Check if in a project with .claude/
-if [ ! -d ".claude" ]; then
-  echo "Error: .claude/ directory not found" >&2
-  echo ""
-  echo "This installer expects to run in a project directory with .claude/" >&2
-  echo "You can either:"
-  echo "  1. Clone the repo first:"
-  echo "       git clone https://github.com/${REPO}.git"
-  echo "       cd NewsSpinner"
-  echo "       bash install.sh"
-  echo ""
-  echo "  2. Initialize .claude/ in your current project:"
-  echo "       mkdir -p .claude"
-  echo "       curl -fsSL https://raw.githubusercontent.com/${REPO}/raw/${BRANCH}/install.sh | bash"
-  echo ""
-  exit 1
-fi
-echo "[2/4] Found .claude/ directory"
+# 2. Ensure project-local .claude/ exists
+mkdir -p "${CLAUDE_DIR}"
+echo "[2/4] Using project directory: ${PROJECT_ROOT}"
 
 # 3. Download repo and extract skills
 TMP=$(mktemp -d)
@@ -47,13 +35,13 @@ echo "[3/4] Downloading skills from GitHub..."
 curl -fsSL "https://github.com/${REPO}/archive/refs/heads/${BRANCH}.tar.gz" \
   | tar xz -C "$TMP" --strip-components=1
 
-# 4. Copy .claude/skills/ to ./.claude/skills/
-mkdir -p ".claude/skills"
-cp -r "$TMP/.claude/skills/." ".claude/skills/"
-echo "       Skills installed to ./.claude/skills/"
+# 4. Copy .claude/skills/ to project-local ./.claude/skills/
+mkdir -p "${SKILLS_DIR}"
+cp -r "$TMP/.claude/skills/." "${SKILLS_DIR}/"
+echo "       Skills installed to ${SKILLS_DIR}/"
 
 # 5. Run skill installer(s)
-for install_sh in ".claude/skills"/*/bin/install.sh; do
+for install_sh in "${SKILLS_DIR}"/*/bin/install.sh; do
   [ -f "$install_sh" ] || continue
   bash "$install_sh"
 done
