@@ -77,7 +77,7 @@ fi
 
 # 5. Register UserPromptSubmit hook in project settings.json
 settings_created=false
-if [ ! -f "$SETTINGS" ]; then
+if [ ! -f "$SETTINGS" ] || ! jq empty "$SETTINGS" 2>/dev/null; then
   echo '{}' > "$SETTINGS"
   settings_created=true
 fi
