@@ -2,12 +2,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
-CONFIG="$SPINNER_DIR/config.json"
-POOL="$SPINNER_DIR/pool.json"
-HISTORY="$SPINNER_DIR/history.json"
-LOCK="$SPINNER_DIR/.lock"
+RUNTIME_DIR="$SKILL_DIR/runtime"
+CONFIG="$RUNTIME_DIR/config.json"
+POOL="$RUNTIME_DIR/pool.json"
+HISTORY="$RUNTIME_DIR/history.json"
+LOCK="$RUNTIME_DIR/.lock"
 SETTINGS="$SPINNER_DIR/settings.json"
+
+mkdir -p "$RUNTIME_DIR"
+
+# One-time migration from legacy .claude/*.json layout
+[ -f "$SPINNER_DIR/config.json" ] && [ ! -f "$CONFIG" ] && mv "$SPINNER_DIR/config.json" "$CONFIG"
+[ -f "$SPINNER_DIR/pool.json" ] && [ ! -f "$POOL" ] && mv "$SPINNER_DIR/pool.json" "$POOL"
+[ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$HISTORY" ] && mv "$SPINNER_DIR/history.json" "$HISTORY"
 
 # Quick bail-outs for speed (this runs on every tool use)
 [ -f "$POOL" ]     || exit 0

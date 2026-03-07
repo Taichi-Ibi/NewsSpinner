@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
+RUNTIME_DIR="$SKILL_DIR/runtime"
 ROTATE_SH="$SCRIPT_DIR/rotate.sh"
 SETTINGS="$SPINNER_DIR/settings.json"
 
@@ -27,17 +28,27 @@ echo "[1/4] Dependencies OK (jq, curl)"
 chmod +x "$SCRIPT_DIR"/*.sh
 echo "[2/4] Script permissions set"
 
-# 3. Create config.json (preserve existing)
-if [ ! -f "$SPINNER_DIR/config.json" ]; then
-  cp "$SKILL_DIR/config.json" "$SPINNER_DIR/config.json"
-  echo "[3/4] Default config.json created"
+# 3. Create runtime config.json (preserve existing)
+mkdir -p "$RUNTIME_DIR"
+if [ -f "$SPINNER_DIR/config.json" ] && [ ! -f "$RUNTIME_DIR/config.json" ]; then
+  mv "$SPINNER_DIR/config.json" "$RUNTIME_DIR/config.json"
+  echo "[3/4] Migrated legacy .claude/config.json -> news-fetch/runtime/config.json"
+elif [ ! -f "$RUNTIME_DIR/config.json" ]; then
+  cp "$SKILL_DIR/config.json" "$RUNTIME_DIR/config.json"
+  echo "[3/4] Default runtime/config.json created"
 else
-  echo "[3/4] config.json already exists, keeping current"
+  echo "[3/4] runtime/config.json already exists, keeping current"
 fi
 
-# 4. Initialize data files
-[ -f "$SPINNER_DIR/pool.json" ]    || echo '[]' > "$SPINNER_DIR/pool.json"
-[ -f "$SPINNER_DIR/history.json" ] || echo '[]' > "$SPINNER_DIR/history.json"
+# 4. Initialize runtime data files
+if [ -f "$SPINNER_DIR/pool.json" ] && [ ! -f "$RUNTIME_DIR/pool.json" ]; then
+  mv "$SPINNER_DIR/pool.json" "$RUNTIME_DIR/pool.json"
+fi
+if [ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$RUNTIME_DIR/history.json" ]; then
+  mv "$SPINNER_DIR/history.json" "$RUNTIME_DIR/history.json"
+fi
+[ -f "$RUNTIME_DIR/pool.json" ]    || echo '[]' > "$RUNTIME_DIR/pool.json"
+[ -f "$RUNTIME_DIR/history.json" ] || echo '[]' > "$RUNTIME_DIR/history.json"
 echo "[4/4] Data files initialized"
 
 # 5. Register UserPromptSubmit hook in project settings.json

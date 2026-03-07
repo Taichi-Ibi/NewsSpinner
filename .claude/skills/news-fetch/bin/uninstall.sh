@@ -2,7 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
+RUNTIME_DIR="$SKILL_DIR/runtime"
 SETTINGS="$SPINNER_DIR/settings.json"
 
 echo "=== NewsSpinner Uninstaller ==="
@@ -30,11 +32,11 @@ else
   echo "[1/2] settings.json not found, skipping"
 fi
 
-# 2. Remove runtime data files (preserve config.json and skill files)
+# 2. Remove runtime data files (preserve runtime/config.json and skill files)
 removed=()
-for f in pool.json history.json; do
-  if [ -f "$SPINNER_DIR/$f" ]; then
-    rm "$SPINNER_DIR/$f"
+for f in pool.json history.json .lock; do
+  if [ -f "$RUNTIME_DIR/$f" ]; then
+    rm "$RUNTIME_DIR/$f"
     removed+=("$f")
   fi
 done

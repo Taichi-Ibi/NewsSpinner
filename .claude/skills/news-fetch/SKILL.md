@@ -16,7 +16,7 @@ Replace Claude Code's spinner text with Google News headlines.
 ## Current Status
 
 Pool remaining:
-!`SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)" && jq 'length' "$SPINNER_DIR/pool.json" 2>/dev/null || echo "0"`
+!`jq 'length' "${CLAUDE_SKILL_DIR}/runtime/pool.json" 2>/dev/null || echo "0"`
 
 ## Prerequisites
 
@@ -61,6 +61,6 @@ bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" clear
 - Network error: suggest checking connectivity
 - Corrupted config.json: restore from default:
   ```bash
-  SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)"
-  cp "${CLAUDE_SKILL_DIR}/config.json" "$SPINNER_DIR/config.json"
+  mkdir -p "${CLAUDE_SKILL_DIR}/runtime"
+  cp "${CLAUDE_SKILL_DIR}/config.json" "${CLAUDE_SKILL_DIR}/runtime/config.json"
   ```

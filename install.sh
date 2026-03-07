@@ -33,13 +33,12 @@ touch "${GITIGNORE_FILE}"
 
 gitignore_rules=(
   ".claude/skills/news-fetch/"
-  ".claude/config.json"
+  ".claude/skills/news-fetch/runtime/config.json"
+  ".claude/skills/news-fetch/runtime/pool.json"
+  ".claude/skills/news-fetch/runtime/history.json"
+  ".claude/skills/news-fetch/runtime/.lock"
   ".claude/settings.json"
-  ".claude/pool.json"
-  ".claude/history.json"
-  ".claude/.lock"
   ".claude/settings.json.bak.*"
-  ".claude/*.tmp"
 )
 
 if ! grep -Fq "# NewsSpinner (auto-added)" "${GITIGNORE_FILE}"; then
