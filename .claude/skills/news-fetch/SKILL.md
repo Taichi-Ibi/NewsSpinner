@@ -4,7 +4,7 @@ description: >
   Manage Google News RSS feeds for the NewsSpinner spinner.
   Trigger when user wants to add/remove news keywords, fetch headlines,
   or check spinner feed status. Keywords: spinner, news, feed, headline, ニュース, フィード
-argument-hint: "[add|remove|list|fetch] [keyword]"
+argument-hint: "[add|remove|list|fetch|clear] [keyword]"
 disable-model-invocation: true
 allowed-tools: Bash, AskUserQuestion
 ---
@@ -16,17 +16,17 @@ Replace Claude Code's spinner text with Google News headlines.
 ## Current Status
 
 Registered feeds:
-!`bash ~/.newsspinner/bin/fetch.sh list 2>/dev/null || echo "Not installed"`
+!`bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" list 2>/dev/null || echo "Not installed"`
 
 Pool remaining:
-!`jq 'length' ~/.newsspinner/pool.json 2>/dev/null || echo "0"`
+!`SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)" && jq 'length' "$SPINNER_DIR/pool.json" 2>/dev/null || echo "0"`
 
 ## Prerequisites
 
-If scripts are missing from `~/.newsspinner/bin/`, guide the user to run:
+If not yet installed, guide the user to run:
 
 ```
-bash ${CLAUDE_SKILL_DIR}/bin/install.sh
+bash "${CLAUDE_SKILL_DIR}/bin/install.sh"
 ```
 
 ## Behavior
@@ -42,30 +42,36 @@ Use AskUserQuestion to let the user choose an action:
 ### `add <keyword>`
 
 ```bash
-bash ~/.newsspinner/bin/fetch.sh add "$1"
+bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" add "$1"
 ```
 
 - After adding, ask "Fetch headlines now?" and run fetch if yes:
   ```bash
-  bash ~/.newsspinner/bin/fetch.sh
+  bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh"
   ```
 
 ### `remove <keyword>`
 
 ```bash
-bash ~/.newsspinner/bin/fetch.sh remove "$1"
+bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" remove "$1"
 ```
 
 ### `list`
 
 ```bash
-bash ~/.newsspinner/bin/fetch.sh list
+bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" list
 ```
 
 ### `fetch`
 
 ```bash
-bash ~/.newsspinner/bin/fetch.sh
+bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh"
+```
+
+### `clear`
+
+```bash
+bash "${CLAUDE_SKILL_DIR}/bin/fetch.sh" clear
 ```
 
 ## Error Handling
@@ -75,5 +81,6 @@ bash ~/.newsspinner/bin/fetch.sh
 - Network error: suggest checking connectivity
 - Corrupted config.json: restore from default:
   ```bash
-  cp ${CLAUDE_SKILL_DIR}/config.json ~/.newsspinner/config.json
+  SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)"
+  cp "${CLAUDE_SKILL_DIR}/config.json" "$SPINNER_DIR/config.json"
   ```

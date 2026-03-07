@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SPINNER_DIR="${NEWSSPINNER_DIR:-$HOME/.newsspinner}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 CONFIG="$SPINNER_DIR/config.json"
 POOL="$SPINNER_DIR/pool.json"
 HISTORY="$SPINNER_DIR/history.json"
@@ -278,7 +279,7 @@ case "${1:-}" in
       do_load
     fi
     # Update spinner immediately after load
-    bash "$SPINNER_DIR/bin/rotate.sh" 2>/dev/null || true
+    bash "$SCRIPT_DIR/rotate.sh" 2>/dev/null || true
     ;;
   *)
     echo "Error: unknown command '$1'" >&2

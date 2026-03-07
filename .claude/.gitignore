@@ -1,0 +1,6 @@
+# Runtime data — not tracked
+pool.json
+history.json
+settings.json
+settings.json.bak*
+.lock

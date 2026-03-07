@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SPINNER_DIR="${NEWSSPINNER_DIR:-$HOME/.newsspinner}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 CONFIG="$SPINNER_DIR/config.json"
 POOL="$SPINNER_DIR/pool.json"
 HISTORY="$SPINNER_DIR/history.json"
@@ -27,6 +28,7 @@ Commands:
   add <keyword>     Add a Google News feed for the keyword
   remove <keyword>  Remove a feed by keyword
   list              List registered feeds
+  clear             Empty pool.json (clear all headlines)
   help              Show this help message
   (no command)      Fetch headlines from all registered feeds
 
@@ -35,20 +37,19 @@ Examples:
   fetch.sh add "Claude Code"
   fetch.sh remove AI
   fetch.sh list
+  fetch.sh clear
   fetch.sh              # fetch all feeds
 EOF
 }
 
-# URL-encode a string (POSIX-portable, no perl/python dependency)
+# URL-encode a string — processes raw bytes to handle multi-byte UTF-8 correctly
 urlencode() {
-  local string="$1" i c
-  local length=${#string}
-  for (( i = 0; i < length; i++ )); do
-    c="${string:i:1}"
-    case "$c" in
-      [a-zA-Z0-9.~_-]) printf '%s' "$c" ;;
-      ' ')              printf '+' ;;
-      *)                printf '%%%02X' "'$c" ;;
+  printf '%s' "$1" | od -An -tx1 | tr -d ' \n' | fold -w2 | while IFS= read -r hex || [ -n "$hex" ]; do
+    chr=$(printf "\\x$hex")
+    case "$chr" in
+      [a-zA-Z0-9.~_-]) printf '%s' "$chr" ;;
+      ' ') printf '+' ;;
+      *) printf '%%%s' "${hex^^}" ;;
     esac
   done
 }
@@ -137,14 +138,16 @@ truncate_title() {
   fi
 }
 
-# Extract titles from RSS XML (portable — no grep -P)
+# Extract article titles from RSS XML
+# Works with both multi-line and single-line (compact) XML
 extract_titles() {
   local xml="$1"
-  # Match <title>...</title> or <title><![CDATA[...]]></title>
-  # Skip the first <title> which is the feed title, not an article
-  echo "$xml" \
-    | sed -n 's/.*<title[^>]*>\s*\(<!\[CDATA\[\)\?\(.*\)\(\]\]>\)\?\s*<\/title>.*/\2/p' \
-    | tail -n +2
+  # Extract only titles inside <item> elements to skip channel/image titles
+  echo "$xml" | grep -oE '<item>.*</item>' \
+    | tr '<' '\n' \
+    | grep '^title>' \
+    | sed 's/^title>//' \
+    | sed 's/<!\[CDATA\[//;s/\]\]>//'
 }
 
 do_fetch() {
@@ -178,6 +181,7 @@ do_fetch() {
     }
 
     local new_titles=()
+    local pool_full=false
 
     while IFS= read -r raw_title; do
       [ -z "$raw_title" ] && continue
@@ -187,13 +191,7 @@ do_fetch() {
       raw_title="${raw_title%"${raw_title##*[![:space:]]}"}"
       [ -z "$raw_title" ] && continue
 
-      local title
-      title=$(truncate_title "$raw_title")
-
-      if [ "$pool_size" -ge "$MAX_POOL_SIZE" ]; then
-        echo "  Pool is full ($MAX_POOL_SIZE). Stopping."
-        break 2
-      fi
+      local title="$raw_title"
 
       # Fast dedup check via jq on cached JSON
       if echo "$pool_json" | jq -e --arg t "$title" 'index($t) != null' > /dev/null 2>&1; then
@@ -208,6 +206,12 @@ do_fetch() {
       pool_json=$(echo "$pool_json" | jq --arg t "$title" '. + [$t]')
       pool_size=$((pool_size + 1))
       added=$((added + 1))
+
+      if [ "$pool_size" -ge "$MAX_POOL_SIZE" ]; then
+        echo "  Pool is full ($MAX_POOL_SIZE). Stopping."
+        pool_full=true
+        break
+      fi
     done < <(extract_titles "$xml")
 
     # Batch-write new titles for this feed
@@ -216,6 +220,8 @@ do_fetch() {
       batch=$(printf '%s\n' "${new_titles[@]}" | jq -R . | jq -s .)
       jq --argjson new "$batch" '. + $new' "$POOL" > "$POOL.tmp" && mv "$POOL.tmp" "$POOL"
     fi
+
+    [ "$pool_full" = true ] && break
   done
 
   local total
@@ -236,6 +242,10 @@ case "${1:-}" in
   list)
     cmd_list
     ;;
+  clear)
+    echo '[]' > "$POOL"
+    echo "Pool cleared."
+    ;;
   -h|--help|help)
     usage
     ;;
@@ -249,7 +259,7 @@ case "${1:-}" in
       do_fetch
     fi
     # Update spinner immediately after fetch
-    bash "$SPINNER_DIR/bin/rotate.sh" 2>/dev/null || true
+    bash "$SCRIPT_DIR/rotate.sh" 2>/dev/null || true
     ;;
   *)
     echo "Error: unknown command '$1'" >&2

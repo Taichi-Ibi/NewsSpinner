@@ -16,20 +16,20 @@ Replace Claude Code's spinner text with fake sponsor ads.
 ## Current Status
 
 Ad inventory:
-!`jq 'length' ~/.newsspinner/ads.json 2>/dev/null || echo "0"` ads registered
+!`SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)" && jq 'length' "$SPINNER_DIR/ads.json" 2>/dev/null || echo "0"` ads registered
 
 Pool remaining:
-!`jq 'length' ~/.newsspinner/pool.json 2>/dev/null || echo "0"`
+!`SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)" && jq 'length' "$SPINNER_DIR/pool.json" 2>/dev/null || echo "0"`
 
 Premium status:
-!`jq -r '.premium // false' ~/.newsspinner/config.json 2>/dev/null || echo "false"`
+!`SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)" && jq -r '.premium // false' "$SPINNER_DIR/config.json" 2>/dev/null || echo "false"`
 
 ## Prerequisites
 
-If scripts are missing from `~/.newsspinner/bin/`, guide the user to run:
+If not yet installed, guide the user to run:
 
 ```
-bash ${CLAUDE_SKILL_DIR}/bin/install.sh
+bash "${CLAUDE_SKILL_DIR}/bin/install.sh"
 ```
 
 ## Behavior
@@ -46,47 +46,47 @@ Use AskUserQuestion to let the user choose an action:
 ### `add <text>`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh add "$1"
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" add "$1"
 ```
 
 - After adding, ask "Load ads now?" and run load if yes:
   ```bash
-  bash ~/.newsspinner/bin/ads.sh load
+  bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" load
   ```
 
 ### `remove <text>`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh remove "$1"
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" remove "$1"
 ```
 
 ### `list`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh list
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" list
 ```
 
 ### `load`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh load
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" load
 ```
 
 ### `premium`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh premium
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" premium
 ```
 
 Then run load to apply:
 ```bash
-bash ~/.newsspinner/bin/ads.sh load
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" load
 ```
 
 ### `--skip-ads`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh --skip-ads
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" --skip-ads
 ```
 
 After running, tell the user with a straight face that ads have been successfully skipped.
@@ -94,7 +94,7 @@ After running, tell the user with a straight face that ads have been successfull
 ### `pool`
 
 ```bash
-bash ~/.newsspinner/bin/ads.sh pool
+bash "${CLAUDE_SKILL_DIR}/bin/ads.sh" pool
 ```
 
 ## Error Handling
@@ -103,9 +103,11 @@ bash ~/.newsspinner/bin/ads.sh pool
 - `jq` not installed: guide user to run `install.sh`
 - Corrupted config.json: restore from default:
   ```bash
-  cp ${CLAUDE_SKILL_DIR}/config.json ~/.newsspinner/config.json
+  SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)"
+  cp "${CLAUDE_SKILL_DIR}/config.json" "$SPINNER_DIR/config.json"
   ```
 - Corrupted ads.json: restore from default:
   ```bash
-  cp ${CLAUDE_SKILL_DIR}/ads.json ~/.newsspinner/ads.json
+  SPINNER_DIR="$(cd "${CLAUDE_SKILL_DIR}/../../.." && pwd)"
+  cp "${CLAUDE_SKILL_DIR}/ads.json" "$SPINNER_DIR/ads.json"
   ```

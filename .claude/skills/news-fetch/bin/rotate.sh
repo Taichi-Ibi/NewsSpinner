@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SPINNER_DIR="${NEWSSPINNER_DIR:-$HOME/.newsspinner}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 CONFIG="$SPINNER_DIR/config.json"
 POOL="$SPINNER_DIR/pool.json"
 HISTORY="$SPINNER_DIR/history.json"
 LOCK="$SPINNER_DIR/.lock"
-SETTINGS="$HOME/.claude/settings.json"
+SETTINGS="$SPINNER_DIR/settings.json"
 
 # Quick bail-outs for speed (this runs on every tool use)
 [ -f "$POOL" ]     || exit 0
@@ -27,17 +28,17 @@ do_rotate() {
 
   if [ "$pool_size" -eq 0 ]; then
     local empty_msgs
-    empty_msgs=$(jq '.empty_messages // ["広告枠空いてます！ /ad load で補充"]' "$CONFIG")
+    empty_msgs=$(jq '.empty_messages // ["No news... run /news-fetch"]' "$CONFIG")
     update_spinner "$(jq -n --argjson msgs "$empty_msgs" '{"mode":"replace","verbs":$msgs}')"
     return 0
   fi
 
-  # Pick a random ad
+  # Pick a random index
   local idx title
   idx=$((RANDOM % pool_size))
   title=$(jq -r ".[$idx]" "$POOL")
 
-  # Remove from pool, add to history
+  # Remove from pool, add to history, trim history — single jq pass each
   jq "del(.[$idx])" "$POOL" > "$POOL.tmp" && mv "$POOL.tmp" "$POOL"
 
   [ -f "$HISTORY" ] || echo '[]' > "$HISTORY"
@@ -45,11 +46,7 @@ do_rotate() {
     . + [$t] | if length > $max then .[(length - $max):] else . end
   ' "$HISTORY" > "$HISTORY.tmp" && mv "$HISTORY.tmp" "$HISTORY"
 
-  # Update spinner with ad and remaining count
-  local remaining
-  remaining=$(jq 'length' "$POOL")
-  local display="${title} [${remaining}]"
-  update_spinner "$(jq -n --arg v "$display" '{"mode":"replace","verbs":[$v]}')"
+  update_spinner "$(jq -n --arg v "$title" '{"mode":"replace","verbs":[$v]}')"
 }
 
 # Use flock if available for safe concurrent access
