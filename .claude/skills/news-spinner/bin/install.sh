@@ -1,7 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GH_RAW="https://raw.githubusercontent.com/Taichi-Ibi/news-spinner/main/.claude/skills/news-spinner"
+
+# ── Detect pipe execution ──────────────────────────────────────────────────────
+# When piped via `curl | bash`, BASH_SOURCE[0] is unset or "/dev/stdin".
+# Download all required files to the project directory, then re-exec from disk.
+_SCRIPT="${BASH_SOURCE[0]:-}"
+if [[ -z "$_SCRIPT" || "$_SCRIPT" == "/dev/stdin" || ! -f "$_SCRIPT" ]]; then
+  echo "=== news-spinner Installer ==="
+  TARGET="$PWD/.claude/skills/news-spinner"
+  echo "[Downloading files to $TARGET ...]"
+  for rel_path in \
+    bin/install.sh bin/fetch.sh bin/rotate.sh bin/uninstall.sh bin/weave_track.py \
+    SKILL.md \
+    templates/config.json templates/state.json templates/ads.json; do
+    dest="$TARGET/$rel_path"
+    mkdir -p "$(dirname "$dest")"
+    curl -fsSL "$GH_RAW/$rel_path" -o "$dest"
+  done
+  chmod +x "$TARGET/bin/"*.sh
+  exec bash "$TARGET/bin/install.sh"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$_SCRIPT")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 RUNTIME_DIR="$SKILL_DIR/runtime"
