@@ -107,7 +107,16 @@ else
 fi
 
 # Immediately load the first headline into the spinner
-bash "$ROTATE_SH" 2>/dev/null || true
+pool_size=$(jq 'length' "$RUNTIME_DIR/pool.json")
+if [ "$pool_size" -gt 0 ]; then
+  idx=$((RANDOM % pool_size))
+  title=$(jq -r ".[$idx]" "$RUNTIME_DIR/pool.json")
+  jq "del(.[$idx])" "$RUNTIME_DIR/pool.json" > "$RUNTIME_DIR/pool.json.tmp" \
+    && mv "$RUNTIME_DIR/pool.json.tmp" "$RUNTIME_DIR/pool.json"
+  jq --arg v "$title" '.spinnerVerbs = {"mode":"replace","verbs":[$v]}' "$SETTINGS" \
+    > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
+  echo "[+] First headline loaded: $title"
+fi
 
 echo ""
 echo "=== Installation complete! ==="
