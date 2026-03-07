@@ -13,7 +13,7 @@ if [[ -z "$_SCRIPT" || "$_SCRIPT" == "/dev/stdin" || ! -f "$_SCRIPT" ]]; then
   TARGET="$PWD/.claude/skills/news-spinner"
   echo "[Downloading files to $TARGET ...]"
   for rel_path in \
-    bin/install.sh bin/fetch.sh bin/rotate.sh bin/uninstall.sh bin/weave_track.py \
+    bin/install.sh bin/fetch.sh bin/rotate.sh bin/weave_track.py \
     SKILL.md \
     templates/config.json templates/state.json templates/ads.json; do
     dest="$TARGET/$rel_path"
