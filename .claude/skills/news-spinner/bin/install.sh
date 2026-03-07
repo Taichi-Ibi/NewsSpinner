@@ -44,9 +44,13 @@ fi
 # 4. Initialize runtime data files (migrate from legacy layout if needed)
 [ -f "$SPINNER_DIR/pool.json" ]    && [ ! -f "$RUNTIME_DIR/pool.json" ]    && mv "$SPINNER_DIR/pool.json"    "$RUNTIME_DIR/pool.json"
 [ -f "$SPINNER_DIR/history.json" ] && [ ! -f "$RUNTIME_DIR/history.json" ] && mv "$SPINNER_DIR/history.json" "$RUNTIME_DIR/history.json"
-[ -f "$RUNTIME_DIR/pool.json" ]    || echo '[]' > "$RUNTIME_DIR/pool.json"
+if [ ! -f "$RUNTIME_DIR/pool.json" ]; then
+  cp "$TEMPLATES_DIR/ads.json" "$RUNTIME_DIR/pool.json"
+  echo "[4/4] Spinner pool seeded with initial ads"
+else
+  echo "[4/4] pool.json already exists, keeping current"
+fi
 [ -f "$RUNTIME_DIR/history.json" ] || echo '[]' > "$RUNTIME_DIR/history.json"
-echo "[4/4] Data files initialized"
 
 # 5. Register UserPromptSubmit hook in project settings.json
 settings_created=false
@@ -96,6 +100,6 @@ echo ""
 echo "Restart Claude Code to activate the hook."
 echo ""
 echo "Quick start:"
-echo "  /news-fetch                                    # manage feeds in Claude Code"
-echo "  bash \"$SCRIPT_DIR/fetch.sh\" add AI            # add a feed from shell"
-echo "  bash \"$SCRIPT_DIR/fetch.sh\"                   # fetch headlines"
+echo "  /news-spinner AI                               # fetch headlines for 'AI' in Claude Code"
+echo "  bash \"$SCRIPT_DIR/fetch.sh\" AI               # fetch headlines from shell"
+echo "  /news-spinner clear                            # clear the spinner pool"

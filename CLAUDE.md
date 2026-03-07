@@ -76,7 +76,8 @@ The project is primarily **Bash-based** with JSON configuration files and a skil
 
 - Shell scripts: `.claude/skills/news-spinner/bin/*.sh`
 - Skill metadata: `.claude/skills/news-spinner/SKILL.md`
-- Config templates (git-tracked): `.claude/skills/news-spinner/templates/config.json`
+- Config templates (git-tracked): `.claude/skills/news-spinner/templates/config.json`, `state.json`
+- Initial joke ads (git-tracked): `.claude/skills/news-spinner/templates/ads.json` (seeded into pool on first install)
 - Runtime config (user-local): `.claude/skills/news-spinner/runtime/config.json` (copied from templates on install)
 - Feature flags: `.claude/skills/news-spinner/runtime/state.json` (`weave_enabled`)
 - Spinner pool: `.claude/skills/news-spinner/runtime/pool.json`

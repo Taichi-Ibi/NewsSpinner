@@ -11,10 +11,18 @@ NewsSpinner replaces the "Working…" spinner verbs shown during Claude Code inf
 
 ## Demo
 
+On first install, the spinner is seeded with fake sponsor ads:
 ```
-⠋ Tesla unveils new AI chip at CES [12]
-⠙ OpenAI announces GPT-5 release date [11]
-⠹ Japan's cherry blossom season starts early [10]
+⠋ ☕ この推論はスターバックスの提供でお送りしています
+⠙ 📎 Clippy™ — お困りのようですね？月額$9.99
+⠹ 💊 頭痛にバファリン — Claude の幻覚にも効きます※個人の感想
+```
+
+After fetching real news with `/news-spinner <keyword>`:
+```
+⠋ Tesla unveils new AI chip at CES
+⠙ OpenAI announces GPT-5 release date
+⠹ Japan's cherry blossom season starts early
 ```
 
 ## Requirements
@@ -143,7 +151,8 @@ NewsSpinner/
             ├── SKILL.md
             ├── templates/
             │   ├── config.json    # default config (git-tracked)
-            │   └── state.json     # default state (git-tracked)
+            │   ├── state.json     # default state (git-tracked)
+            │   └── ads.json       # initial joke ads (seeded into pool on install)
             ├── bin/
             │   ├── install.sh
             │   ├── uninstall.sh
@@ -176,6 +185,8 @@ This safely removes the NewsSpinner hook and runtime files, then deletes `.claud
 ## 日本語
 
 Claude Code の spinnerVerbs（推論中に表示される「Working…」等のテキスト）を Google News のヘッドラインに置き換えるツールです。
+
+インストール直後はジョーク広告がスピナーに表示されます。`/news-spinner <キーワード>` で本物のニュースに切り替えられます。
 
 設定・データはすべてプロジェクトの `.claude/skills/news-spinner/runtime/` ディレクトリに保存されます（gitignore済み）。
 
