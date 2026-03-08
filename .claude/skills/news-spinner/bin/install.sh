@@ -75,7 +75,26 @@ else
 fi
 [ -f "$RUNTIME_DIR/history.json" ] || echo '[]' > "$RUNTIME_DIR/history.json"
 
-# 5. Register UserPromptSubmit hook in project settings.json
+# 5. Migrate: remove rotate.sh hook and spinnerVerbs from settings.json if present
+OLD_SETTINGS="$SPINNER_DIR/settings.json"
+if [ -f "$OLD_SETTINGS" ] && jq empty "$OLD_SETTINGS" 2>/dev/null; then
+  needs_cleanup=false
+  jq -e '.hooks.UserPromptSubmit[]?.hooks[]? | select(.command | contains("rotate.sh"))' "$OLD_SETTINGS" > /dev/null 2>&1 && needs_cleanup=true
+  jq -e '.spinnerVerbs' "$OLD_SETTINGS" > /dev/null 2>&1 && needs_cleanup=true
+  if [ "$needs_cleanup" = true ]; then
+    cp "$OLD_SETTINGS" "$OLD_SETTINGS.bak.$(date +%Y%m%d%H%M%S)"
+    jq 'del(.spinnerVerbs) |
+        if .hooks.UserPromptSubmit then
+          .hooks.UserPromptSubmit |= map(select(.hooks[]?.command | contains("rotate.sh") | not))
+        end |
+        if (.hooks.UserPromptSubmit | length) == 0 then del(.hooks.UserPromptSubmit) else . end |
+        if (.hooks | length) == 0 then del(.hooks) else . end' \
+      "$OLD_SETTINGS" > "$OLD_SETTINGS.tmp" && mv "$OLD_SETTINGS.tmp" "$OLD_SETTINGS"
+    echo "[migrate] Removed rotate.sh hook and spinnerVerbs from settings.json"
+  fi
+fi
+
+# 5. Register UserPromptSubmit hook in settings.local.json
 settings_created=false
 if [ ! -f "$SETTINGS" ] || ! jq empty "$SETTINGS" 2>/dev/null; then
   echo '{}' > "$SETTINGS"
