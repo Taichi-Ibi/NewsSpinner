@@ -25,7 +25,7 @@ fi
 [ -f "$HISTORY" ] || echo '[]' > "$HISTORY"
 [ -f "$STATE" ]   || echo '{"weave_enabled": false}' > "$STATE"
 
-MAX_POOL_SIZE=$(jq -r '.max_pool_size // 50' "$CONFIG")
+MAX_POOL_SIZE=$(jq -r '.max_pool_size // 1000' "$CONFIG")
 
 usage() {
   cat <<'EOF'

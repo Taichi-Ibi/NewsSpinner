@@ -5,7 +5,7 @@
     "gl": "JP",
     "ceid": "JP:ja"
   },
-  "max_pool_size": 50,
+  "max_pool_size": 1000,
   "empty_messages": [
     "No news... run /news-fetch <keyword>"
   ]

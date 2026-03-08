@@ -101,7 +101,7 @@ Runtime config is stored in `.claude/skills/news-spinner/runtime/config.json` (c
 | `default_params.hl` | `ja` | Language code |
 | `default_params.gl` | `JP` | Country code |
 | `default_params.ceid` | `JP:ja` | Edition ID |
-| `max_pool_size` | `50` | Maximum headlines in pool |
+| `max_pool_size` | `1000` | Maximum headlines in pool |
 | `max_title_length` | `40` | Truncate titles longer than this |
 | `empty_messages` | `["No news... run /news-spinner <keyword>"]` | Shown when pool is empty |
 
