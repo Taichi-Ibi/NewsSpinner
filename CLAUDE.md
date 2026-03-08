@@ -45,7 +45,7 @@ The project is primarily **Bash-based** with JSON configuration files and a skil
 ### 6. Testing & Verification
 - After changes to fetch.sh: manually run it and verify `runtime/pool.json` structure
 - After changes to rotate.sh: verify spinner text updates on at least one tool call
-- Check that the hook stays registered in `.claude/settings.json` after installation
+- Check that the hook stays registered in `.claude/settings.local.json` after installation
 
 ## Common Patterns
 

@@ -30,7 +30,7 @@ SPINNER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # PROJECT/.claude/
 RUNTIME_DIR="$SKILL_DIR/runtime"
 TEMPLATES_DIR="$SKILL_DIR/templates"
 ROTATE_SH="$SCRIPT_DIR/rotate.sh"
-SETTINGS="$SPINNER_DIR/settings.json"
+SETTINGS="$SPINNER_DIR/settings.local.json"
 
 echo "=== news-spinner Installer ==="
 

@@ -9,7 +9,7 @@ CONFIG="$RUNTIME_DIR/config.json"
 POOL="$RUNTIME_DIR/pool.json"
 HISTORY="$RUNTIME_DIR/history.json"
 LOCK="$RUNTIME_DIR/.lock"
-SETTINGS="$SPINNER_DIR/settings.json"
+SETTINGS="$SPINNER_DIR/settings.local.json"
 
 mkdir -p "$RUNTIME_DIR"
 

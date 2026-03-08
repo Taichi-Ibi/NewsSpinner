@@ -37,9 +37,9 @@ Check which of the following paths actually exist on disk (using Bash), then pre
 
 - `${CLAUDE_SKILL_DIR}/runtime/` (runtime data directory)
 - `${CLAUDE_SKILL_DIR}/` (entire skill directory)
-- The `hooks.PostToolUse` entry referencing `rotate.sh` in `.claude/settings.json`
-- The `spinnerVerbs` key in `.claude/settings.json`
-- Any `.claude/settings.json.bak.*` backup files
+- The `hooks.UserPromptSubmit` entry referencing `rotate.sh` in `.claude/settings.local.json`
+- The `spinnerVerbs` key in `.claude/settings.local.json`
+- Any `.claude/settings.local.json.bak.*` backup files
 
 Show only the items that exist. Do NOT delete anything. Tell the user to remove these manually or ask Claude Code to delete them.
 
